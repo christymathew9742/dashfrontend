@@ -1,93 +1,309 @@
 "use client";
 
-import React, { useCallback, useMemo,useState ,useEffect} from "react";
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from "@/redux/store";
-import { getAboutSelector } from "@/redux/reducers/about/selectors";
-import { fetchAboutRequest } from "@/redux/reducers/about/actions";
-import { FieldConfig } from "@/component/FieldProps/fieldConfig";
-import {
-    Divider,
-    useMediaQuery,
-    Collapse,
-    Link,
-    LinkProps,
-    TextField,
-    Button,
-    Box,
-} from "@mui/material";
-import Grid from '@mui/material/Grid2';
-import { styled } from '@mui/material/styles';
-import { Formik, Form, Field } from "formik";
-import * as Yup from "yup";
-import { FieldWrapper } from "@/component/FieldWrapper";
-import { FieldProps } from "@/component/FieldProps";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import ReactFlow, {
+  addEdge,
+  applyNodeChanges,
+  applyEdgeChanges,
+  Handle,
+  Position,
+  Controls,
+  Background,
+  NodeChange,
+  EdgeChange,
+  Connection,
+  Node,
+  Edge,
+  NodeProps,
+} from "reactflow";;
+import { Editor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { TextStyle } from '@tiptap/extension-text-style';
+import 'react-quill/dist/quill.snow.css'; 
+import "reactflow/dist/style.css";
+import axios from "axios";
+import {constantsText} from "../../constant/constant"
 
-const gridItemProps = {
-    item: true,
-    xs: 12,
-    sm: 6,
-    size:6,
-};
-const validationSchema = Yup.object({
-    name: Yup.string().required("Name is required"),
-    email: Yup.string().email("Invalid email format").required("Email is required"),
-    // age: Yup.number().required("Age is required").positive("Age must be positive").integer("Age must be an integer"),
-    // address: Yup.string().required("Address is required"),
-});
 
-const Order = () =>  {
-    const dispatch = useDispatch<AppDispatch>();
-    const storeData: any = useSelector(getAboutSelector);
-    console.log(storeData,'dataaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-    const initialValues = useMemo(() => (
-        {
-            name: "",
-            email: "", 
-            // age: "", 
-            // address: "" 
-        }
-    ), []);
-    const onSubmit = useCallback(
-        async (values:any, { resetForm }:any) => {
-            console.log(values,'valllllllllllllllll')
-            try {
-                await dispatch(fetchAboutRequest('christy'));
-                resetForm();
-            } catch (error) {
-                console.error("Error submitting form:", error);
-            }
-        }, []
-    );
+const {
+  BOT:{
+    DEFAULT,
+    STEP,
+  },
+} = constantsText;
 
-    return (
-        <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
-            {({ getFieldProps, errors,touched,isSubmitting,setFieldValue, values, handleChange, handleBlur}:any) => {
-                return (
-                    <Form>
-                        <Grid container spacing={10}>
-                            <FieldWrapper container spacing={2} size={8} height='auto'>
-                                <FieldProps 
-                                    Config={FieldConfig['name']}
-                                />
-                                <FieldProps 
-                                    Config={FieldConfig['email']}
-                                />
-                            </FieldWrapper>
-                            <FieldWrapper  size={4} height={'75px!important'}>
-                                <Grid size={12}>
-                                    <Button type="submit" variant="contained" color="primary" fullWidth disabled={isSubmitting}>
-                                        Submit
-                                    </Button>
-                                </Grid>
-                            </FieldWrapper>
-                        </Grid>
-                    </Form>
-                )
-            }}
-        </Formik>
-    )
+type Input = {
+  id: string;
+  type: string;
+  field: string;
+  value: string; 
+  editor:any;
 }
 
-export default Order
+type CustomNodeData = {
+  inputs: Input[];
+  label:string;
+  setInputs: (callback: (inputs: Input[]) => Input[]) => void;
+};
 
+const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, id }) => {
+  const editorRefs = useRef<Map<string, Editor>>(new Map());
+
+  const handleInputChange = (inputId: string, value: string) => {
+    data.setInputs((inputs) =>
+      inputs.map((input) =>
+        input.id === inputId ? { ...input, value } : input
+      )
+    );
+  };
+
+  const onDropInput = (event: React.DragEvent) => {
+    event.preventDefault();
+    const inputDataStr = event.dataTransfer.getData("application/reactflow-input");
+    if (!inputDataStr) return;
+
+    try {
+      const { type, field } = JSON.parse(inputDataStr);
+      const newInput: Input = {
+        id: `${id}-input-${data.inputs.length + 1}`,
+        type,
+        field: field || "messages",
+        editor: new Editor({
+          extensions: [StarterKit],
+          content: "<p>Type your message...</p>",
+        }),
+        value: "",
+      };
+      
+      editorRefs.current.set(newInput.id, newInput.editor);
+      data.setInputs((prevInputs) => [...prevInputs, newInput]);
+    } catch (error) {
+      console.error("Error parsing input data:", error);
+    }
+  };
+
+  const onDragOver = (event: React.DragEvent) => event.preventDefault();
+
+  useEffect(() => {
+    data.inputs.forEach((input) => {
+      if (input.editor) {
+        input.editor.on('update', () => handleInputChange(input.id, input.editor.getHTML()));
+      }
+    });
+
+    return () => {
+      data.inputs.forEach((input) => {
+        input.editor?.off('update');
+        editorRefs.current.delete(input.id); 
+      });
+    };
+  }, [data.inputs]);
+
+  useEffect(() => {
+    return () => {
+      editorRefs.current.forEach((editor) => editor.destroy());
+      editorRefs.current.clear();
+    };
+  }, []);
+
+  return (
+    <div className="rounded w-40" onDrop={onDropInput} onDragOver={onDragOver}>
+      <h2 className={`${!data.inputs.length ? "text-center" : "text-left"} font-semibold text-sm font-sans mb-2 text-text-theme`}>
+        {!data.inputs.length ? DEFAULT : data.label}
+      </h2>
+      <Handle type="target" position={Position.Left} />
+      <div className="flex flex-col gap-2">
+        {data.inputs.map(({ id, type, field, editor, value }) => (
+          <div key={id} className="flex flex-col">
+            {field === "messages" && (
+              <>
+                {type === "rich-text" && editor ? (
+                  <div className="tiptap-editor-container">
+                    <EditorContent className="" editor={editor} />
+                  </div>
+                ) : (
+                  <input
+                    type={type}
+                    className="border border-gray-300 rounded-md p-1 bg-green-100"
+                    value={value}
+                    onChange={(e) => handleInputChange(id, e.target.value)}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+      <Handle type="source" position={Position.Right} />
+    </div>
+  );
+};
+
+const nodeTypes = {
+  customNode: CustomNode,
+};
+
+const Flow = () => {
+  const [nodes, setNodes] = useState<Node<CustomNodeData>[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) =>
+      setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) =>
+      setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
+  );
+  const onConnect = useCallback(
+    (connection: Connection) =>
+      setEdges((eds) => addEdge(connection, eds)),
+    []
+  );
+
+  const onDropNode = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      const nodeType = event.dataTransfer.getData("application/reactflow-node");
+      if (!nodeType) return;
+
+      const lastNode = nodes[nodes.length - 1]; 
+      if (!lastNode) return;
+
+      const offsetX = 200;
+      const offsetY = 100; 
+      const position = {
+        x: lastNode.position.x + offsetX,
+        y: lastNode.position.y + offsetY,
+      };
+
+      const newNode: Node<CustomNodeData> = {
+        id: `group-${nodes.length + 1}`,
+        type: nodeType,
+        position,
+        data: {
+          inputs: [],
+          label: `${STEP}${nodes.length + 1}`,
+          setInputs: (callback) =>
+            setNodes((nds) =>
+              nds.map((node) =>
+                node.id === `group-${nodes.length + 1}`
+                  ? { ...node, data: { ...node.data, inputs: callback(node.data.inputs) } }
+                  : node
+              )
+            ),
+        },
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [nodes]
+  );
+
+  const onDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+
+  const saveData = () => {
+    const formData = nodes.map((node) => ({
+      id: node.id,
+      inputs: node.data.inputs.map((input) => ({
+        type: input.type,
+        value: input.value,
+      })),
+    }));
+    console.log("Saved Data:", formData);
+    axios.post("/api/save", { data: formData }).then(() => {
+      alert("Data saved successfully!");
+    });
+  };
+
+  useEffect(() => {
+    const initialNode: Node<CustomNodeData> = {
+      id: "group-1",
+      type: "customNode",
+      position: { x: 20, y: 20 },
+      data: {
+        inputs: [],
+        label: `${STEP}${nodes.length + 1}`,
+        setInputs: (callback) =>
+          setNodes((nds) =>
+            nds.map((node) =>
+              node.id === "group-1"
+                ? { ...node, data: { ...node.data, inputs: callback(node.data.inputs) } }
+                : node
+            )
+          ),
+      },
+    };
+
+    setNodes([initialNode]);
+  }, []);
+
+  return (
+    <div className="h-screen w-full">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDrop={onDropNode}
+        onDragOver={onDragOver}
+        nodeTypes={nodeTypes}
+        fitViewOptions={{ padding: 0, maxZoom: 1, minZoom: 0.5 }}
+        fitView
+      >
+        <Controls />
+        <Background gap={7} size={1} />
+      </ReactFlow>
+      <div className="absolute top-0 right-0 bottom-0 w-full sm:w-44 bg-white p-4 rounded shadow-lg overflow-y-auto">
+        <div
+          draggable
+          onDragStart={(e) =>
+            e.dataTransfer.setData("application/reactflow-node", "customNode")
+          }
+          className="border-2 border-dotted border-gray-300 p-3 rounded cursor-pointer mb-4 text-gray-500 text-center text-sm"
+        >
+          Drop Node
+        </div>
+
+        <div className="grid grid-cols-2  gap-y-2 gap-x-1 text-center">
+          {["rich-text", "Image", "Video", "YouTube"].map((type) => (
+            <div
+              key={type}
+              draggable
+              onDragStart={(e) => {
+                const inputData = {
+                  type: type,
+                  field: "messages",
+                };
+                e.dataTransfer.setData(
+                  "application/reactflow-input",
+                  JSON.stringify(inputData)
+                );
+              }}
+              className="bg-white border-2 border-dotted border-gray-300 p-2 rounded cursor-pointer text-gray-500 text-sm"
+            >
+              {type}
+            </div>
+          ))}
+        </div>
+
+        <hr className="my-4 border-b border-gray-200" />
+
+        <button
+          onClick={saveData}
+          className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-all"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Flow;

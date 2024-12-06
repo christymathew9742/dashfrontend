@@ -1,77 +1,76 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
-import Grid from '@mui/material/Grid2';
+import React, { useCallback, useMemo } from "react";
+import Grid from "@mui/material/Grid2";
 import { FieldProps } from "@/component/FieldProps";
 import { LoginOutlined } from "@mui/icons-material";
 import { FieldConfig } from "@/component/FieldProps/fieldConfig";
-import { Typography,Button } from "@mui/material";
-import { parseCookies} from "nookies";
-import { useRouter, usePathname } from 'next/navigation';
-import { Formik, Form } from "formik";
+import { Typography, Button, CircularProgress } from "@mui/material";
+import { parseCookies } from "nookies";
+import { debounce } from "lodash";
+import { useRouter } from "next/navigation";
+import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { loginV2 } from "@/auth/auth";
+
+interface LoginValues {
+    email: string;
+    password: string;
+}
 
 const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email format").required("Email is required"),
     password: Yup.string().required("Password is required"),
 });
 
-const Login = () => {
+const Login: React.FC = () => {
     const router = useRouter();
-    const { accessToken } = parseCookies();
-    const initialValues = useMemo(() => (
-        {
-            email:"",
-            password:"",
-        }
-    ), []);
+    const initialValues = useMemo<LoginValues>(() => ({
+            email: "",
+            password: "",
+    }), []);
 
-    const onSubmit = useCallback(async (values:any, { resetForm }:any) => {
-        await loginV2(values, (data:any, err:any) => {
-            if(data) {
-                console.error(data)
-            }else {
-                router.push('/dashboard')
-            }
-        });
+const onSubmit = useCallback (
+    debounce(async (values: LoginValues, { resetForm }: FormikHelpers<LoginValues>) => {
         try {
+            await loginV2(values, (data: any, err: any) => {
+                if (data) {
+                    console.error("Login error:", data);
+                } else {
+                    router.push("/dashboard");
+                }
+            });
             resetForm();
         } catch (error) {
             console.error("Error submitting form:", error);
         }
+    },  1000),
+[router]);
 
-    }, []);
-
-    return (
-        <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
-            {({ isSubmitting }) => (
-                <Form>
-                    <Grid container spacing={2} mb={2} className="w-full">
-                        <Typography
-                            component="h1"
-                            variant="h4"
-                            mb={4}
-                            sx={{
-                                width: '100%',
-                                fontSize: 'clamp(2.2rem, 10vw, 2.3rem)',
-                                textAlign: 'center',
-                                color: '#ffffff',
-                            }}
-                        >
-                            Sign in
-                        </Typography>
-                        {Object.keys(initialValues).map((key) => (
-                            <FieldProps key={key} Config={FieldConfig[key]}/>
-                        ))}
-                    </Grid>
-                    <Grid container justifyContent="center">
-                        <Button type="submit" disabled={isSubmitting} variant="outlined" endIcon={<LoginOutlined />}>Sign In</Button>
-                    </Grid>
-                </Form>
-            )}
-        </Formik>
-    );
-}
+return (
+    <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
+        {({ isSubmitting }) => (
+            <Form>
+                <Grid container spacing={2} mb={2} className="w-full">
+                    <h1 className="w-full text-center text-letter-theme-clr mb-4 text-[clamp(2.2rem,10vw,2.3rem)] font-semibold">
+                        Sign In
+                    </h1>
+                    {Object.keys(initialValues).map((key) => (
+                        <FieldProps key={key} Config={FieldConfig[key as keyof LoginValues]} />
+                    ))}
+                </Grid>
+                <Grid container justifyContent="center">
+                    <button 
+                        type="submit" 
+                        className="flex items-center justify-center w-full sm:w-auto bg-gradient-to-r  from-custom-blue-left to-custom-blue-right text-white py-2 px-6 rounded-md hover:opacity-90 transition-all"
+                    >
+                       {isSubmitting ? <>Sign In...  <CircularProgress size={20} className="mr-2 text-white"/></> : <>Sign In  <LoginOutlined className="w-5 h-5 ml-2" /></>}
+                    </button>
+                </Grid>
+            </Form>
+        )}
+    </Formik>
+);};
 
 export default Login;
+

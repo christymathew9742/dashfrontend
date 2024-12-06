@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ClientProvider from "./clientProvider";
 import AuthWrapper from "./authWrapper";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -14,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ClientProvider>
           <AuthWrapper>
+            <ToastContainer/>
             {children}
           </AuthWrapper>
         </ClientProvider>

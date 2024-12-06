@@ -1,4 +1,5 @@
-import axios from '../../../axios';
+//import axios from '../../../axios';
+import api from '../../../utils/axios'
 import { all, call, put, takeLatest } from 'redux-saga/effects';
 
 import {
@@ -14,7 +15,7 @@ import {
 //fetch about
 function* fetchAboutSaga(payload:any): any {
     try {
-        const response: any = yield call(axios.get, `/products/`);
+        const response: any = yield call(api.get,`/todos/`);
         yield put (
             fetchAboutSuccess({
                 about: response.data  

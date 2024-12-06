@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { EventEmitter } from 'events';
 import Cookies from 'universal-cookie';
-import { useRouter } from 'next/navigation';
+import { toast } from "react-toastify";
 
 let Auth: CommonAuth | null = null; 
 const cookies = new Cookies();
@@ -66,7 +66,7 @@ class CommonAuth extends EventEmitter {
       const response = await axios(config);
       console.log('Registration response:', response.data);
       cBack(null, response.data);
-    } catch (error) {
+    } catch (error:any) {
       console.log('Registration error:', error);
       cBack(error, null);
     }
@@ -111,11 +111,13 @@ export async function signUpV2(values: any, clbk: Function) {
   await Auth.register({ username, email, password, confirmPassword }, clbk);
 }
 
-export const signout = async () => {
-  const router = useRouter();
-  cookies.remove('accessToken');
-  localStorage.clear();
-  router.push('/');
+export const signOut = async () => {
+  try {
+      cookies.remove('accessToken');
+      console.log('User logged out successfully');
+  } catch (error) {
+      console.error('Error logging out:', error);
+  }
 };
 
 

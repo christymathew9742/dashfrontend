@@ -3,22 +3,22 @@ import { SxProps } from '@mui/system';
 export const customInputStyles:SxProps = {
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
-        borderColor: '#ffffff',
+        borderColor: '#51A1FF',
         },
         '&:hover fieldset': {
-        borderColor: '#ffffff',
+        borderColor: '#51A1FF',
         },
         '&.Mui-focused fieldset': {
-        borderColor: '#ffffff',
+        borderColor: '#51A1FF',
         },
     },
     '& .MuiInputLabel-root': {
-        color: '#ffffff',
+        color: '#51A1FF',
     },
     '& .MuiInputLabel-root.Mui-focused': {
-        color: '#ffffff', 
+        color: '#51A1FF', 
     },
     '& .MuiOutlinedInput-input': {
-        color: '#ffffff', 
+        color: '#51A1FF', 
     },
 };

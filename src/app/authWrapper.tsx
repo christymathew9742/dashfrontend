@@ -8,7 +8,6 @@ import DashBoard from "@/component/DashBoard/DashBoard";
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); 
     const router = useRouter();
     const pathname = usePathname();
     const { accessToken } = parseCookies();
@@ -31,35 +30,25 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
                 router.push('/');
             }
         }
-        setIsLoading(false);
     }, [pathname, router,accessToken]);
 
-    const handleLogout = () => {
-        destroyCookie(null, 'accessToken');
-        setIsAuthenticated(false);
-        router.push('/');
-    };
-
-    // if (isLoading) {
-    //     return <div>Loading...</div>;
-    // }
-    
     return isAuthenticated ? (
         <DashBoard>
             {children}
-            <button onClick={handleLogout}>Logout</button>
         </DashBoard>
     ) : (
         <>{children}</>
     );
 }
 
+export async function getServerSideProps(context:any) {
+  const cookies = parseCookies(context);
+  const accessToken = cookies.accessToken;
 
-
-
-
-
-
-
-
+  return {
+    props: {
+      initialAuthState: Boolean(accessToken), 
+    },
+  };
+}
 

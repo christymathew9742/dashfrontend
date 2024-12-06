@@ -16,6 +16,7 @@ export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
   const categoryStore: any = useSelector(getAboutSelector);
   console.log(categoryStore,'responceeeeeeeeeeeeeeeeeeeeee')
+  console.log('ggggggggggggggggggggggggggggggggggggggg')
   useEffect(()=> {
     dispatch(fetchAboutRequest(data));
   },[])
