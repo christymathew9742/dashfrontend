@@ -49,7 +49,7 @@ import Youtube from "@tiptap/extension-youtube";
 import { Plugin } from 'prosemirror-state';
 import { Mark } from '@tiptap/core';
 import "reactflow/dist/style.css";
-import {constantsText} from "../../constant/constant"
+import {constantsText} from "../../../constant/constant"
 import { IconButton } from "@mui/material";
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';

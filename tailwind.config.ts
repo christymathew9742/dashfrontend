@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} **/
 module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
@@ -17,12 +17,22 @@ module.exports = {
       colors: {
         'custom-blue-right': '#6054FF',
         'custom-blue-left': '#459AFF',
-        'button-text-clr':'#ffffff',
         'letter-theme-clr':'#334155',
-        'whats-message-bord':'rgb(152 255 190)',
-        'text-theme':'#53565a'
+        'text-theme':'#53565a',
+        'node-active':'#ffffff',
+        'drag-border':'#d1d5db',
+        'drag-text':'#6b7280',
+        'divider':'#e5e7eb',
+        'msg-icons':'rgb(15 171 73)',
+        'highlight-clr':'#FF1493',
+        'group-icon':'#800080',
+        'delete-icon':'#c51f1f',//#fff3f9
+        'error':'#ff065e',
+        'close-btn-h':'#9c0909',
       },
       fontSize: {
+        'xxxs':'0.5rem', //8px
+        'xxs': '.6875rem', //11px
         'xs': '.75rem', // 12px
         'sm': '.875rem', // 14px
         'base': '1rem', // 16px
