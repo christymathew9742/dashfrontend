@@ -11,25 +11,18 @@
 
 // export default nextConfig;
 
-import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {
-  // React Strict Mode (optional)
-  // reactStrictMode: false, // Uncomment to disable React Strict Mode
+/** @type {import('next').NextConfig} */
 
-  // Webpack Configuration to suppress logs
-  webpack(config, { isServer }) {
-    // Suppress unnecessary logs in production
-    if (!isServer && process.env.NODE_ENV === 'production') {
-      config.stats = 'errors-only'; // Show only errors in logs
-    }
-
-    // Additional custom Webpack configuration can be added here
-    return config;
-  },
+const nextConfig = {
+  reactStrictMode: true, // Enables React Strict Mode
+  swcMinify: true, // Uses SWC for faster builds
+  distDir: 'build',
 };
 
-export default nextConfig;
+module.exports = nextConfig;
+
+
 
 
 
