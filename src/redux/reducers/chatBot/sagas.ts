@@ -2,6 +2,9 @@ import api from '../../../utils/axios';
 import { isQueryParamString } from '@/utils/utils';
 import { all, call, put, takeLatest, fork, take, delay } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
+import { EventChannel } from 'redux-saga'; 
+import { WebSocketMessage } from './types';
+
 import {
     FETCH_BOT_REQUEST,
     POST_BOT_REQUEST,
@@ -42,9 +45,9 @@ function createWebSocketChannel(socketUrl: string) {
 
 function* watchWebSocket() {
     const socketUrl: string = 'ws://localhost:5000';
-    const channel = yield call(createWebSocketChannel, socketUrl);
+    const channel:EventChannel<any>  = yield call(createWebSocketChannel, socketUrl);
     while (true) {
-        const message = yield take(channel);
+        const message:WebSocketMessage   = yield take(channel);
         if (message.connected) {
             yield put(webSocketConnected());
         } else if (message.closed) {

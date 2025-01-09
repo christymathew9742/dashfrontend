@@ -10,7 +10,7 @@ interface FieldPropsConfig {
     name: string;
     label: string;
     type: 'text' | 'email' | 'number' | 'password' | 'textarea';
-    size?: string;
+    size?: any;
     style?: object;
 }
 

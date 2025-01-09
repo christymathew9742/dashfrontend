@@ -122,6 +122,13 @@ export type WebSocketError = {
     type: typeof WEBSOCKET_ERROR;
     payload: WebSocketErrorPayload;
 };
+
+export type WebSocketMessage = { 
+    connected: boolean; 
+    closed: any;
+    error:any;
+    data:any;
+};
   
 // Combined actions type
 export type botActions =
