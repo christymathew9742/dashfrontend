@@ -14,12 +14,14 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import ViewListIcon from '@mui/icons-material/ViewList';
 
 const {
   BOT:{
     ICON:{
       MESSAGE,
       REPLAY,
+      PREFERENCE,
       GROUP,
     }
   }
@@ -43,6 +45,10 @@ export const replayIcons = [
   { type: 'File', icon: <FileUploadIcon sx={{ fontSize: '14px', marginRight: '4px', color: REPLAY }} /> },
   { type: 'Date', icon: <CalendarMonthIcon sx={{ fontSize: '14px', marginRight: '4px', color: REPLAY }} /> },
   { type: 'Time', icon: <AccessTimeFilledIcon sx={{ fontSize: '14px', marginRight: '4px', color: REPLAY }} /> },
+];
+
+export const Preference = [
+  { type: 'List', icon: <ViewListIcon sx={{ fontSize: '14px', marginRight: '4px', color: PREFERENCE }} /> },
 ];
 
 export const groupIcons = [
@@ -82,6 +88,11 @@ export  const decodeHtml = (html: string): string => {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   return doc.body.innerHTML;
 };
+
+export function isQueryParamString(str:any) {
+  // Check if the string matches the general query parameter format
+  return /^(\w+=[^&]*&)*(\w+=[^&]*)$/.test(str);
+}
 
 
 

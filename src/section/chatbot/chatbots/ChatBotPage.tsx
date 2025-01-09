@@ -14,34 +14,22 @@ import {
   Button,
   TextField,
   TablePagination,
-  useTheme,
-  useMediaQuery,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
   IconButton,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
-import { getBotSelector } from "@/redux/reducers/chatBot/selectors";
-import { getPendingSelector } from "@/redux/reducers/chatBot/selectors";
-import { deleteBotRequest, fetchBotRequest, postFetchBotRequest, updateBotRequest } from "@/redux/reducers/chatBot/actions";
-import { constantsText } from "@/constant/constant";
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditNoteIcon from '@mui/icons-material/EditNote';
+import { getBotSelector, getPendingSelector } from "@/redux/reducers/chatBot/selectors";
+import { deleteBotRequest, fetchBotRequest } from "@/redux/reducers/chatBot/actions";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import Loader from "@/component/Loader/Loader";
 import Link from "next/link";
-import { useSearchParams,useRouter, usePathname } from 'next/navigation';
 import { toast } from "react-toastify";
-
-const {
-  BOT:{
-    CREATE_CHAT:{
-      TITLE,
-      STATUS,
-      DATE,
-      ACTION,
-    }
-  },
-} = constantsText;
 
 const Skeleton = styled("div")<{ height: number }>(({ theme, height }) => ({
   backgroundColor: theme.palette.action.hover,
@@ -56,37 +44,42 @@ const Skeleton = styled("div")<{ height: number }>(({ theme, height }) => ({
 }));
 
 const ChatBot = () => {
-  const searchParams = useSearchParams();
-  const title = searchParams.get('title');
   const dispatch = useDispatch<AppDispatch>();
+  const botData = useSelector(getBotSelector);
+  const [page, setPage] = useState(1);
   const pendingStatus = useSelector(getPendingSelector)
-  const [selected, setSelected] = useState<number[]>([]);
-  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [search, setSearch] = useState("");
-  const theme = useTheme();
-  const currentPath = usePathname()
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const router = useRouter();
-  const botData = useSelector(getBotSelector); 
-  const isPending = useSelector(getPendingSelector);
+  const [status, setStatus] = useState<string | null>(null);
+  const [selected, setSelected] = useState<number[]>([]);
 
   useEffect(() => {
-    dispatch(fetchBotRequest());
-  }, [dispatch]);
+    fetchBots();
+  }, [page, rowsPerPage, search, status]);
 
-  const handleDelete = async (id: any,title:string) => {
+  const fetchBots = () => {
+    const queryObject = { 
+      search,
+      status,
+      page,
+      limit: rowsPerPage,
+    };
+    const queryString = new URLSearchParams(queryObject as any).toString();
+    dispatch(fetchBotRequest(queryString));
+  };
+
+  const handleDelete = async (id: any, title: string) => {
     try {
-      await dispatch(deleteBotRequest(id));
-      if(!pendingStatus?.pending) {
-        setTimeout(() => {
-          dispatch(fetchBotRequest());
-        }, 500);
-        toast.success(`${title} deleted successfully`);
-      }
+        await dispatch(deleteBotRequest(id));
+        if (!pendingStatus?.pending) {
+          setTimeout(() => {
+            fetchBots();
+          }, 200);
+            toast.success(`${title} deleted successfully`);
+        }
     } catch (error) {
-      console.log('error',error)
-      toast.error(`Error in ChatBot deleted`);
+        console.log('Error in deleting ChatBot:', error);
+        toast.error(`Error in deleting ${title}`);
     }
   };
 
@@ -106,37 +99,37 @@ const ChatBot = () => {
     );
   };
 
-  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
-    setPage(newPage);
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
+    setPage(newPage + 1);
   };
 
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    setPage(1);
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
+    setPage(1);
   };
 
-  const filteredRows = botData.data?.filter((row: any) =>
-    row.title.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  const handleStatusChange = (event: any) => {
+    setStatus(event.target.value as string | null);
+    setPage(1);
+  };
 
-  useEffect(()=>{
-    if(title) {
-      toast.success(`${title} || "Chatbot"} saved successfully`);
-    }
-  },[title])
+  // if (!botData) {
+  //   return <Lodder />;  // Show loading indicator if data is not available
+  // }
 
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
         <Skeleton height={100}>
-          <Link
-            // href={"/chatbot-details"}
-            href={`/chatbot-details?botNum=${botData?.data?.length+1}`}
-          >
+          <Link href={`/chatbot-details?botNum=${botData?.data?.length + 1}`}>
             <Button variant="contained" color="primary">
               Add New Chatbot
             </Button>
@@ -148,68 +141,65 @@ const ChatBot = () => {
             value={search}
             onChange={handleSearch}
           />
-          <Button variant="outlined" color="secondary">
-            Go Back
-          </Button>
+          <FormControl variant="outlined" size="small">
+            <InputLabel>Status</InputLabel>
+            <Select value={status || ""} onChange={handleStatusChange} label="Status">
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="true">Enabled</MenuItem>
+              <MenuItem value="false">Disabled</MenuItem>
+            </Select>
+          </FormControl>
         </Skeleton>
       </Grid>
       <Grid item xs={12}>
-        <TableContainer component={Paper} sx={{ boxShadow: theme.shadows[3] }}>
-          <Table sx={{ minWidth: 650 }} aria-label="chatbot table">
+        <TableContainer component={Paper}>
+          <Table>
             <TableHead>
               <TableRow>
-                <TableCell align="center" padding="checkbox">
+                <TableCell padding="checkbox">
                   <Checkbox
-                    indeterminate={selected.length > 0 && selected.length < filteredRows?.length}
-                    checked={filteredRows?.length > 0 && selected.length === filteredRows?.length}
+                    indeterminate={selected.length > 0 && selected.length < botData?.total}
+                    checked={botData?.total > 0 && selected.length === botData?.total}
                     onChange={handleSelectAll}
                   />
                 </TableCell>
-                <TableCell align="center">{TITLE}</TableCell>
-                <TableCell align="center">{DATE}</TableCell>
-                <TableCell align="center">{STATUS}</TableCell>
-                <TableCell align="center">{ACTION}</TableCell>
+                <TableCell align="center">Title</TableCell>
+                <TableCell align="center">Date</TableCell>
+                <TableCell align="center">Status</TableCell>
+                <TableCell align="center">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRows && filteredRows.length === 0 ? (
+              {botData?.data?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center">
                     No data available
                   </TableCell>
                 </TableRow>
               ) : (
-                (filteredRows || []) 
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row: any) => {
-                    const formattedDate = new Date(row?.updatedAt).toISOString().split("T")[0];
-                    return (
-                      <TableRow key={row.id}>
-                        <TableCell align="center" padding="checkbox">
-                          <Checkbox
-                            checked={selected.includes(row.id)}
-                            onChange={() => handleCheckboxClick(row.id)}
-                          />
-                        </TableCell>
-                        <TableCell align="center">{row?.title}</TableCell>
-                        <TableCell align="center">{formattedDate}</TableCell>
-                        <TableCell align="center">{row?.status ? 'Enabled' : 'Disabled'}</TableCell>
-                        <TableCell align="center">
-                          <Link
-                            // href={`/chatbot-details?chatbot=${row?._id}`}
-                            href={`/order?botId=${row?._id}`}
-                          >
-                            <IconButton>
-                              <EditNoteIcon sx={{color:'#108310'}} />
-                            </IconButton>
-                          </Link>
-                          <IconButton onClick={() => handleDelete(row._id,row?.title)}>
-                            <DeleteIcon sx={{color:'#c61919'}} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                Array.isArray(botData?.data) && botData?.data?.map((row: any, index: number) => (
+                  <TableRow key={row.id || `row-${index}`}>
+                    <TableCell padding="checkbox" align="center">
+                      <Checkbox
+                        checked={selected.includes(row.id)}
+                        onChange={() => handleCheckboxClick(row.id)}
+                      />
+                    </TableCell>
+                    <TableCell align="center">{row.title}</TableCell>
+                    <TableCell align="center">{new Date(row.updatedAt).toISOString().split("T")[0]}</TableCell>
+                    <TableCell align="center">{row.status ? "Enabled" : "Disabled"}</TableCell>
+                    <TableCell align="center">
+                      <Link href={`/chatbot-details?botId=${row._id}`}>
+                        <IconButton>
+                          <EditNoteIcon sx={{ color: "#108310" }} />
+                        </IconButton>
+                      </Link>
+                      <IconButton onClick={() => handleDelete(row._id, row.title)}>
+                        <DeleteIcon sx={{ color: "#c61919" }} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -217,9 +207,9 @@ const ChatBot = () => {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={filteredRows?.length || 0}
+          count={botData.total || 0}
           rowsPerPage={rowsPerPage}
-          page={page}
+          page={page - 1}  // Use page - 1 for a 0-based index
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
@@ -229,6 +219,115 @@ const ChatBot = () => {
 };
 
 export default ChatBot;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// return field === 'preference' ? (
+          //   <div key={`${field}-editor-${id}`} className={`flex flex-col rounded-md p-4 ${isFocused === id ? `border-${field}-node` : `${field}-node-normal`}`}>
+          //     {options && (
+          //       <>
+          //         {Array.isArray(options) && options.map((option, opIndex) => (
+          //           <div key={`option-${id}-${opIndex}-${option.id}`}  className="relative flex mb-2">
+          //             <Handle
+          //               type="source"
+          //               id={`option-${id}-${opIndex}-${option.id}`} 
+          //               position={Position.Right}
+          //               className="absolute !right-[-12px] top-1/2 text-[10px] !w-[8px] !h-[8px] !bg-node-active !border-2 !border-solid !border-op-handil"
+          //             />
+          //             <div>
+          //               <input
+          //                 type="text"
+          //                 className="px-2 py-[2px] rounded-l-md w-full text-xxm focus:outline-none hover:outline-none border-1 border-solid border-drag-border"
+          //                 placeholder={`option- ${opIndex + 1}`}
+          //                 value={option?.value}
+          //                 onChange={(e) => handleInputChange(id, e.target.value, option?.id,)}
+          //               />
+          //             </div>
+          //             <div>
+          //               <button
+          //                 className="bg-blue-500 text-white px-2 py-[1px]"
+          //                 onClick={() => handleAddEditor(index, id)}
+          //               >
+          //                 <AddBoxIcon className="text-xxm"/>
+          //               </button>
+          //             </div>
+          //             <div>
+          //               <button
+          //                 className="bg-red-500 text-white px-2 py-[1px] rounded-r-md"
+          //                 onClick={() => handleDeleteEditor(option?.id, index,id,opCount)}
+          //               >
+          //                 <DeleteIcon className="text-xxm"/>
+          //               </button>
+          //             </div>
+          //           </div>
+          //         ))}
+          //       </>              
+          //     )}
+          //   </div>
+          // ):(
+          //   <div key={`${field}-editor-${id}`}  className={`flex flex-col rounded-md p-1 ${isFocused === id ? `border-${field}-node` : `${field}-node-normal`}`}>
+          //     {editor && loadEditor && (
+          //       <div id={`editor-${id}`} className="relative tiptap-editor-container nodrag cursor-text text-left">
+          //         {isReplay && (
+          //           <Handle
+          //             type="source"
+          //             id={`${field}-${id}}`}
+          //             position={Position.Right}
+          //             className="absolute !right-[-13px] top-1/2 text-[10px] !w-[8px] !h-[8px] !bg-node-active !border-2 !border-solid !border-[#f069b1]"
+          //           />
+          //         )}
+          //         {isFocused === id && (
+          //           <>
+          //             <div className="grid grid-cols-8 gap-x-1">
+          //               {buttonConfigs.map(({ icon, action, isActive }, tbIndex) => (
+          //                 <div key={`${field}-toolbar-${id}-${tbIndex}`} className="ml-2 flex items-center justify-center space-x-1">
+          //                   <IconButton
+          //                     onMouseDown={(e) => {
+          //                       e.preventDefault();
+          //                       e.stopPropagation();
+          //                       (action: EditorActions) => editor && editor.chain().focus()[action]().run();
+          //                       const editorAction = action as EditorActions;
+          //                       if (editor) {
+          //                         editor.chain().focus()[editorAction]().run();
+          //                       }
+          //                     }}
+          //                     sx={{ padding: "5px" }}
+          //                   >
+          //                     {React.cloneElement(icon, {
+          //                       sx: { fontSize: "16px", color: editor.isActive(isActive) ? "#272323" : "inherit" },
+          //                     })}
+          //                   </IconButton>
+          //                   <FontAwesomeIcon
+          //                     icon={faTrash}
+          //                     className="text-drag-text absolute -right-1 -top-1 text-xxxs hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out p-1 cursor-pointer"
+          //                     onMouseDown={() => handleDeleteDynamicFields(id,index)}
+          //                   />
+          //                 </div>
+          //               ))}
+          //             </div>
+          //             <hr className="border-t-1 border-divider" />
+          //           </>
+          //         )}
+          //         <EditorContent editor={editor} className="text-xxs" />
+          //       </div>
+          //     )}
+          //   </div>
+          // );
+
+
 
 
 

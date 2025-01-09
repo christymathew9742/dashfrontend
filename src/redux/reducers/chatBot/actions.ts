@@ -27,9 +27,11 @@ import {
 } from './types';
 
 // Fetch ChatBot
-export const fetchBotRequest = (payload: any = ''): any => ({
+export const fetchBotRequest = (
+  payload: any
+): any => ({
   type: FETCH_BOT_REQUEST,
-  payload,
+  payload
 });
 
 export const fetchBotSuccess = (payload: SuccessPayload): FetchBotSuccess => ({
@@ -91,7 +93,7 @@ export const deleteBotRequest = (payload: any = ''): any => ({
   payload,
 });
 
-export const deleteBotSuccess = (payload: SuccessPayload) => ({
+export const deleteBotSuccess = (payload: any) => ({
   type: DELETE_BOT_SUCCESS,
   payload,
 });

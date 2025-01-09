@@ -1,3 +1,5 @@
+import { padding } from "@mui/system";
+
 /** @type {import('tailwindcss').Config} **/
 module.exports = {
   content: [
@@ -26,12 +28,14 @@ module.exports = {
         'msg-icons':'rgb(15 171 73)',
         'highlight-clr':'#FF1493',
         'group-icon':'#800080',
-        'delete-icon':'#c51f1f',//#fff3f9
+        'delete-icon':'#c51f1f',
         'error':'#ff065e',
         'close-btn-h':'#9c0909',
+        'op-handil': 'rgb(23 196 220)'
       },
       fontSize: {
         'xxxs':'0.5rem', //8px
+        'xxm':'0.625rem', //10px
         'xxs': '.6875rem', //11px
         'xs': '.75rem', // 12px
         'sm': '.875rem', // 14px
@@ -49,6 +53,9 @@ module.exports = {
         '2': '2px',
         '3': '3px',
       },
+      padding: {
+        '2px': '2px',
+      }
     },
   },
   plugins: [],

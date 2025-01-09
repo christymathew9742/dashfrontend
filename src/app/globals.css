@@ -84,6 +84,15 @@
 .react-flow__node .replay-node-normal {
     background-color: #fff3f9;
 }
+
+/*preference*/
+.react-flow__node .border-preference-node  {
+    border: 1px solid rgb(23 196 220);
+}
+.react-flow__node .preference-node-normal {
+    background-color: rgb(220 251 255);
+}
+ 
  
 /**textEditor Tiptap section**/
 /* Set minimum height for the content area */

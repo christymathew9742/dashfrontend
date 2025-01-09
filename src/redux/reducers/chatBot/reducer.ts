@@ -119,7 +119,7 @@ export default (state = initialState, action: botActions) => {
             ...state,
             pending: false,
             botResponse: action.payload,
-            bot: state.bot.filter((botItem) => botItem.id !== action.payload),
+            bot: state.bot.filter((botItem) => botItem.id && botItem.id !== action.payload),
             error: null,
         };
     case DELETE_BOT_FAILURE:

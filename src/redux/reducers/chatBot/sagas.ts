@@ -1,4 +1,5 @@
 import api from '../../../utils/axios';
+import { isQueryParamString } from '@/utils/utils';
 import { all, call, put, takeLatest, fork, take, delay } from 'redux-saga/effects';
 import { eventChannel } from 'redux-saga';
 import {
@@ -23,10 +24,10 @@ import {
     webSocketError,
 } from './actions';
 
-const createChatBot = (body: any) => api.post<any[]>(`/createbot/`, body);
-const fetchChatBot = (id: any) => api.get<any[]>(`/createbot/${id}`);
-const updateChatBot = (body: any, id: any) => api.put<any[]>(`/createbot/${id}`, body);
-const deleteBot = (id: any) => api.delete<any[]>(`/createbot/${id}`);
+const createChatBot = (body: any) => api.post<any[]>(`/createbots/`, body);
+const fetchChatBot = (params: any) => api.get<any[]>(`/createbots${params}`);
+const updateChatBot = (body: any, id: any) => api.put<any[]>(`/createbots/${id}`, body);
+const deleteBot = (id: any) => api.delete<any[]>(`/createbots/${id}`);
 
 function createWebSocketChannel(socketUrl: string) {
     return eventChannel<any>((emit) => {
@@ -35,7 +36,6 @@ function createWebSocketChannel(socketUrl: string) {
         socket.onmessage = (event) => emit({...event.data});
         socket.onerror = (error) => emit({ error });
         socket.onclose = () => emit({ closed: true });
-
         return () => socket.close();
     });
 }
@@ -69,9 +69,10 @@ function* fetchReyalTimedataSaga(data: any): any {
 
 //Fetch ChatBot
 function* fetchBotSaga(data:any): any {
-    const {payload} = data
+    const {payload} = data;
+    const params = isQueryParamString(payload)?`?${payload}`:`/${payload}`;
     try {
-        const response: any = yield call(fetchChatBot,payload);
+        const response: any = yield call(fetchChatBot,params);
         yield put (fetchBotSuccess({bot: response.data }));
     } catch (e: any) 
         {yield put(fetchBotFailure({error: e.message}));
@@ -111,7 +112,6 @@ function* deleteChatBot(data: any): any {
         yield put(deleteBotSuccess({ bot: response.data }));
     } catch (e: any) {
         yield put(deleteBotFailure({ error: e.message }));
-        console.error(e);
     }
 }
 
